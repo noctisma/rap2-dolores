@@ -12,9 +12,16 @@ const relatives = {
       switch (action.type) {
         case 'INTERFACE_LOCK':
         case 'INTERFACE_UNLOCK':
+        case 'ENTITY_LOCK':
+        case 'ENTITY_UNLOCK':
         case 'REPOSITORY_UPDATE':
         case 'PROPERTIES_UPDATE':
+        case 'PROPERTIES_ENTITY_UPDATE':
           return true
+        case 'ENTITY_LOCK_SUCCEEDED':
+        case 'ENTITY_LOCK_FAILED':
+        case 'ENTITY_UNLOCK_SUCCEEDED':
+        case 'ENTITY_UNLOCK_FAILED':
         case 'INTERFACE_LOCK_SUCCEEDED':
         case 'INTERFACE_LOCK_FAILED':
         case 'INTERFACE_UNLOCK_SUCCEEDED':
@@ -23,6 +30,8 @@ const relatives = {
         case 'REPOSITORY_UPDATE_FAILED':
         case 'PROPERTIES_UPDATE_SUCCEEDED':
         case 'PROPERTIES_UPDATE_FAILED':
+        case 'PROPERTIES_ENTITY_UPDATE_SUCCEEDED':
+        case 'PROPERTIES_ENTITY_UPDATE_FAILED':
           return false
       }
       return state

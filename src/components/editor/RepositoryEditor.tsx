@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer'
 import { PropTypes, connect, Link, replace, _ } from '../../family'
 import { serve } from '../../relatives/services/constant'
 import { Spin } from '../utils'
@@ -34,9 +35,15 @@ import {
   addProperty,
   updateProperty,
   deleteProperty,
+  updateEntityProperties,
   updateProperties,
   sortPropertyList
 } from '../../actions/property'
+import {
+  lockEntity,
+  unlockEntity
+} from '../../actions/entity'
+
 import {
   GoRepo,
   GoPlug,
@@ -49,9 +56,10 @@ import {
 
 import './RepositoryEditor.css'
 import ExportPostmanForm from '../repository/ExportPostmanForm'
-import { RootState, Repository, Module, Interface } from 'actions/types'
+import { RootState, Repository, Module, Interface, Entity } from 'actions/types'
 import DefaultValueModal from './DefaultValueModal'
-
+import EntityList from './EntityList'
+import EntityEditor from './EntityEditor'
 // DONE 2.1 import Spin from '../utils/Spin'
 // TODO 2.2 缺少测试器
 // DONE 2.2 各种空数据下的视觉效果：空仓库、空模块、空接口、空属性
@@ -70,6 +78,7 @@ interface Props {
 interface States {
   rapperInstallerModalOpen: boolean
   defaultValuesModalOpen: boolean
+  modelOpen: boolean,
   update: boolean
   exportPostman: boolean
   importSwagger: boolean
@@ -98,6 +107,9 @@ class RepositoryEditor extends Component<Props, States> {
     onAddProperty: PropTypes.func.isRequired,
     onUpdateProperty: PropTypes.func.isRequired,
     onUpdateProperties: PropTypes.func.isRequired,
+    onLockEntity: PropTypes.func.isRequired,
+    onUnlockEntity: PropTypes.func.isRequired,
+    onUpdateEntityProperties: PropTypes.func.isRequired,
     onDeleteProperty: PropTypes.func.isRequired,
     onSortPropertyList: PropTypes.func.isRequired,
   }
@@ -109,6 +121,7 @@ class RepositoryEditor extends Component<Props, States> {
       exportPostman: false,
       rapperInstallerModalOpen: false,
       defaultValuesModalOpen: false,
+      modelOpen: false,
       importSwagger: false,
     }
   }
@@ -160,6 +173,10 @@ class RepositoryEditor extends Component<Props, States> {
       mod.interfaces && mod.interfaces.length
         ? mod.interfaces.find((item: any) => item.id === +params.itf) || mod.interfaces[0]
         : ({} as Interface)
+    const ent: Entity =
+      mod.entities && mod.entities.length
+        ? mod.entities.find((item: any) => item.id === +params.ent) || mod.entities[0]
+        : ({} as Entity)
 
     const ownerlink = repository.organization
       ? `/organization/repository?organization=${repository.organization.id}`
@@ -182,6 +199,11 @@ class RepositoryEditor extends Component<Props, States> {
             {repository.canUserEdit ? (
               <span className="fake-link edit" onClick={() => this.setState({ update: true })}>
                 <GoPencil /> 编辑
+              </span>
+            ) : null}
+            {repository.canUserEdit ? (
+              <span className="fake-link storage" onClick={() => this.setState({ modelOpen: true })}>
+                <GoPencil /> 模型管理
               </span>
             ) : null}
             <RepositoryForm
@@ -267,6 +289,17 @@ class RepositoryEditor extends Component<Props, States> {
             <InterfaceEditor itf={itf} mod={mod} repository={repository} />
           </div>
         </div>
+        <SwipeableDrawer
+              anchor="right"
+              open={this.state.modelOpen}
+              onClose={() => this.setState({ modelOpen: false })}
+              onOpen={() => this.setState({ modelOpen: true })}
+        >
+          <div className="InterfaceWrapper">
+            <EntityEditor ent={ent} mod={mod} repository={repository} />
+            <EntityList ents={mod.entities} repository={repository} mod={mod} ent={ent} />
+          </div>
+        </SwipeableDrawer>
       </article >
     )
   }
@@ -299,6 +332,9 @@ const mapDispatchToProps = {
   onAddProperty: addProperty,
   onUpdateProperty: updateProperty,
   onUpdateProperties: updateProperties,
+  onLockEntity: lockEntity,
+  onUnlockEntity: unlockEntity,
+  onUpdateEntityProperties: updateEntityProperties,
   onDeleteProperty: deleteProperty,
   onSortPropertyList: sortPropertyList,
   replace,

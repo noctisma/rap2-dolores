@@ -38,7 +38,7 @@ const replaceLength = (obj: any) => {
 }
 
 function isPrimitiveType(type: string) {
-  return ['number', 'null', 'undefined', 'boolean', 'string'].indexOf(type.toLowerCase()) > -1
+  return ['int', 'long', 'boolean', 'short', 'byte', 'double', 'string'].indexOf(type.toLowerCase()) > -1
 }
 const isIncreamentNumberSequence = (numbers: any) =>
   numbers.every((num: any) => typeof num === 'number' && ((num: any, i: number) => i === 0 || num - numbers[i - 1] === 1))
@@ -152,10 +152,10 @@ class Importer extends Component<ImporterProps, ImporterState> {
     }
     let type = schema.type[0].toUpperCase() + schema.type.slice(1)
     let rule = ''
-    if (type === 'Array' && schema.items && schema.items.length > 1) {
+    if ((type === 'List' || type === 'Set' || type === 'Map') && schema.items && schema.items.length > 1) {
       rule = schema.items.length
     }
-    let value = /Array|Object/.test(type) ? '' : schema.template
+    let value = /List|Set|Map|Object/.test(type) ? '' : schema.template
     if (schema.items && schema.items.length) {
       const childType = schema.items[0].type
       if (isPrimitiveType(childType)) {
@@ -175,7 +175,7 @@ class Importer extends Component<ImporterProps, ImporterState> {
           // 比如 [{a:1},{a:2}]
           // 我们可以用 type: Array rule: +1 value: [1,2] 进行还原
           value = JSON.stringify(valueArr)
-          type = 'Array'
+          type = 'List'
           rule = '+1'
         }
       }

@@ -100,6 +100,7 @@ export function* unlockInterface(action: any) {
     const res = yield call(EditorService.unlockInterface, action.id)
     if (res.isOk) {
       yield put(InterfaceAction.unlockInterfaceSucceeded(action.id))
+      console.log(action)
       if (action.onResolved) { action.onResolved() }
     } else {
       window.alert(`发生错误：${res.errMsg}`)

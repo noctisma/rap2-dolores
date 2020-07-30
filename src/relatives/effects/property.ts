@@ -51,6 +51,21 @@ export function* updateProperties(action: any) {
     if (action.onRejected) { action.onRejected() }
   }
 }
+export function* updateEntityProperties(action: any) {
+  try {
+    console.log(action)
+    const result = yield call(EditorService.updateEntityProperties, action.ent, action.properties, action.summary)
+    yield put(PropertyAction.updateEntityPropertiesSucceeded({
+      entId: action.ent,
+      properties: result.properties,
+    }))
+    if (action.onResolved) { action.onResolved() }
+  } catch (e) {
+    console.error(e.message)
+    yield put(PropertyAction.updateEntityPropertiesFailed(e.message))
+    if (action.onRejected) { action.onRejected() }
+  }
+}
 export function* sortPropertyList(action: any) {
   try {
     const count = yield call(EditorService.sortPropertyList, action.ids)

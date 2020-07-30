@@ -33,12 +33,29 @@ export const updateProperties = (itf: any, properties: any, summary: any, onReso
   summary,
   onResolved,
 })
+
 export const updatePropertiesSucceeded = (payload: any) => ({
   type: 'PROPERTIES_UPDATE_SUCCEEDED',
   payload,
 })
 export const updatePropertiesFailed = (message: any) => ({
   type: 'PROPERTIES_UPDATE_FAILED',
+  message,
+})
+
+export const updateEntityProperties = (ent: any, properties: any, summary: any, onResolved: any) => ({
+  type: 'PROPERTIES_ENTITY_UPDATE',
+  ent,
+  properties,
+  summary,
+  onResolved,
+})
+export const updateEntityPropertiesSucceeded = (payload: any) => ({
+  type: 'PROPERTIES_ENTITY_UPDATE_SUCCEEDED',
+  payload,
+})
+export const updateEntityPropertiesFailed = (message: any) => ({
+  type: 'PROPERTIES_ENTITY_UPDATE_FAILED',
   message,
 })
 

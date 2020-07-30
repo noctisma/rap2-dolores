@@ -1,8 +1,8 @@
 import React, { useState, MouseEventHandler } from 'react'
 import { connect, Link, StoreStateRouterLocationURI, replace } from '../../family'
-import { sortInterfaceList, deleteInterface } from '../../actions/interface'
+import { sortEntityList, deleteEntity } from '../../actions/entity'
 import { deleteModule } from '../../actions/module'
-import { Module, Repository, RootState, Interface, User } from '../../actions/types'
+import { Module, Repository, RootState, Entity, User } from '../../actions/types'
 import { RSortable, CustomScroll } from '../utils'
 import InterfaceForm from './InterfaceForm'
 import { useConfirm } from 'hooks/useConfirm'
@@ -10,37 +10,38 @@ import { GoPencil, GoTrashcan, GoLock } from 'react-icons/go'
 import { getCurrentInterface } from '../../selectors/interface'
 import { Button, ButtonGroup } from '@material-ui/core/'
 import ModuleForm from './ModuleForm'
+import EntityEditor from './EntityEditor'
+import EntityForm from './EntityForm'
 import MoveModuleForm from './MoveModuleForm'
-import Icon from '@material-ui/core/Icon'
 import { useSelector, useDispatch } from 'react-redux'
 import './InterfaceList.css'
 
-interface InterfaceBaseProps {
+interface EntityBaseProps {
   repository: Repository
   mod: Module
   active?: boolean
   auth?: User
-  itf?: Interface
-  curItf?: Interface
-  deleteInterface: typeof deleteInterface
+  ent?: Entity
+  curEnt?: Entity
+  deleteEntity: typeof deleteEntity
   replace?: typeof replace
 }
 
-function InterfaceBase(props: InterfaceBaseProps) {
-  const { repository, mod, itf, curItf } = props
+function EntityBase(props: EntityBaseProps) {
+  const { repository, mod, ent, curEnt } = props
   const auth = useSelector((state: RootState) => state.auth)
   const router = useSelector((state: RootState) => state.router)
   const selectHref = StoreStateRouterLocationURI(router)
-    .setSearch('itf', itf!.id.toString())
+    .setSearch('ent', ent!.id.toString())
     .href()
   const [open, setOpen] = useState(false)
 
-  const handleDeleteInterface: MouseEventHandler<HTMLAnchorElement> = e => {
+  const handleDeleteModel: MouseEventHandler<HTMLAnchorElement> = e => {
     e.preventDefault()
-    const message = `接口被删除后不可恢复！\n确认继续删除『#${itf!.id} ${itf!.name}』吗？`
+    const message = `模型被删除后不可恢复！\n确认继续删除『#${ent!.id} ${ent!.name}』吗？`
     if (window.confirm(message)) {
-      const { deleteInterface } = props
-      deleteInterface(props.itf!.id, () => {
+      const { deleteEntity } = props
+      deleteEntity(props.ent!.id, () => {
       })
       const { pathname, hash, search } = router.location
       replace(pathname + hash + search)
@@ -54,9 +55,9 @@ function InterfaceBase(props: InterfaceBaseProps) {
           to={selectHref}
           onClick={e => {
             if (
-              curItf &&
-              curItf.locker &&
-              !window.confirm('编辑模式下切换接口，会导致编辑中的资料丢失，是否确定切换接口？')
+              curEnt &&
+              curEnt.locker &&
+              !window.confirm('编辑模式下切换模型，会导致编辑中的资料丢失，是否确定切换模型？')
             ) {
               e.preventDefault()
             } else {
@@ -68,32 +69,32 @@ function InterfaceBase(props: InterfaceBaseProps) {
             }
           }}
         >
-          <div className="name"><Icon>{itf!.type}</Icon>{itf!.name}</div>
-          <div className="url">{itf!.url}</div>
+          <div className="name">{ent!.name}</div>
+          <div className="url">{ent!.namespace}</div>
         </Link>
       </span>
       {repository.canUserEdit ? (
         <div className="toolbar">
-          {itf!.locker ? (
+          {ent!.locker ? (
             <span className="locked mr5">
               <GoLock />
             </span>
           ) : null}
-          {!itf!.locker || itf!.locker.id === auth.id ? (
+          {!ent!.locker || ent!.locker.id === auth.id ? (
             <span className="fake-link" onClick={() => setOpen(true)}>
               <GoPencil />
             </span>
           ) : null}
-          <InterfaceForm
+          {/* <InterfaceForm
             title="修改接口"
             repository={repository}
             mod={mod}
-            itf={itf}
+            ent={ent}
             open={open}
             onClose={() => setOpen(false)}
-          />
-          {!itf!.locker ? (
-            <Link to="" onClick={handleDeleteInterface}>
+          /> */}
+          {!ent!.locker ? (
+            <Link to="" onClick={handleDeleteModel}>
               <GoTrashcan />
             </Link>
           ) : null}
@@ -103,30 +104,30 @@ function InterfaceBase(props: InterfaceBaseProps) {
   )
 }
 const mapStateToProps = (state: RootState) => ({
-  curItf: getCurrentInterface(state),
+  curEnt: getCurrentInterface(state),
   router: state.router,
 })
 const mapDispatchToProps = {
   replace,
-  deleteInterface,
+  deleteEntity,
 }
-const InterfaceWrap = connect(mapStateToProps, mapDispatchToProps)(InterfaceBase)
+const EntityWrap = connect(mapStateToProps, mapDispatchToProps)(EntityBase)
 
-interface InterfaceListProps {
-  itfs?: Interface[]
-  itf?: Interface
-  curItf: Interface
+interface EntityListProps {
+  ents?: Entity[]
+  ent?: Entity
+  curEnt: Entity
   mod: Module
   repository: Repository
 }
-function InterfaceList(props: InterfaceListProps) {
-  const [interfaceFormOpen, setInterfaceFormOpen] = useState(false)
+function EntityList(props: EntityListProps) {
+  const [entityFormOpen, setEntityFormOpen] = useState(false)
   const [moduleFormOpen, setModuleFormOpen] = useState(false)
   const [moveModuleFormOpen, setMoveModuleFormOpen] = useState(false)
   const dispatch = useDispatch()
   const confirm = useConfirm()
   const auth = useSelector((state: RootState) => state.auth)
-  const { repository, itf, itfs = [], mod } = props
+  const { repository, ent, ents = [], mod } = props
 
   const handleDeleteModule: MouseEventHandler<HTMLButtonElement> = e => {
     e.preventDefault()
@@ -156,7 +157,7 @@ function InterfaceList(props: InterfaceListProps) {
 
   const handleSort = (_: any, sortable: any) => {
     dispatch(
-      sortInterfaceList(sortable.toArray(), mod.id, () => {
+      sortEntityList(sortable.toArray(), () => {
         /** empty */
       }),
     )
@@ -166,74 +167,55 @@ function InterfaceList(props: InterfaceListProps) {
       {repository.canUserEdit ? (
         <div className="header">
           <Button
-            className="newIntf"
-            variant="outlined"
-            fullWidth={true}
-            color="primary"
-            onClick={() => setInterfaceFormOpen(true)}
+              className="newIntf"
+              variant="outlined"
+              fullWidth={true}
+              color="primary"
+              onClick={() => setEntityFormOpen(true)}
           >
-            新建接口
+            新建模型
           </Button>
 
-          <InterfaceForm
-            title="新建接口"
+          <EntityForm
+            title="新建模型"
             repository={repository}
             mod={mod}
-            open={interfaceFormOpen}
-            onClose={() => setInterfaceFormOpen(false)}
+            open={entityFormOpen}
+            onClose={() => setEntityFormOpen(false)}
           />
 
-          <ButtonGroup fullWidth={true} size="small">
-            <Button variant="outlined" color="primary" onClick={() => setModuleFormOpen(true)}>
-              修改模块
-            </Button>
-            <Button variant="outlined" color="primary" onClick={() => setMoveModuleFormOpen(true)}>
-              移动/复制
-            </Button>
-            <Button variant="outlined" color="primary" onClick={handleDeleteModule}>
-              删除模块
-            </Button>
-          </ButtonGroup>
-
-          {moduleFormOpen && (
-            <ModuleForm
-              title="修改模块"
-              module={mod}
-              repository={repository}
-              open={moduleFormOpen}
-              onClose={() => setModuleFormOpen(false)}
-            />
-          )}
-
-          {moveModuleFormOpen && (
-            <MoveModuleForm
-              title="移动/复制模块"
+          {/* {entityFormOpen && (
+            <EntityForm
+              title="修改模型"
               mod={mod}
               repository={repository}
-              open={moveModuleFormOpen}
-              onClose={() => setMoveModuleFormOpen(false)}
+              ent={ent}
+              open={entityFormOpen}
+              onClose={() => setEntityFormOpen(false)}
             />
-          )}
+            // <EntityEditor ent={ent} mod={module} repository={repository} />
+          )} */}
         </div>
       ) : null}
-      {itfs.length ? (
+      {ents.length ? (
         <div className="scrollWrapper">
           <CustomScroll>
             <RSortable onChange={handleSort} disabled={!repository.canUserEdit}>
               <ul className="body">
-                {itfs.map((item: any) => (
+                {ents.map((item: any) => (
                   <li
                     key={item.id}
-                    className={item.id === itf!.id ? 'active sortable' : 'sortable'}
+                    className={item.id === ent!.id ? 'active sortable' : 'sortable'}
                     data-id={item.id}
                   >
-                    <InterfaceWrap
+                    <EntityWrap
                       repository={repository}
                       mod={mod}
-                      itf={item}
-                      active={item.id === itf!.id}
+                      ent={item}
+                      active={item.id === ent!.id}
                       auth={auth}
                     />
+                    {item.name}
                   </li>
                 ))}
               </ul>
@@ -241,10 +223,10 @@ function InterfaceList(props: InterfaceListProps) {
           </CustomScroll>
         </div>
       ) : (
-        <div className="alert alert-info">暂无接口，请新建</div>
-      )}
+          <div className="alert alert-info">暂无模型，请新建</div>
+        )}
     </article>
   )
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(InterfaceList)
+export default connect(mapStateToProps, mapDispatchToProps)(EntityList)

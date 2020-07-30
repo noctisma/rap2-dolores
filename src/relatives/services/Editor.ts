@@ -190,6 +190,67 @@ export default {
       .then(res => res.json())
       .then(json => json.data)
   },
+  // 实体 Entity
+  fetchEntity(id: any) {
+    return fetch(`${serve}/entity/get?id=${id}`, { ...CREDENTIALS })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  lockEntity(id: any) {
+    return fetch(`${serve}/entity/lock`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify({ id }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  unlockEntity(id: any) {
+    return fetch(`${serve}/entity/unlock`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify({ id }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  addEntity(ent: any) {
+    return fetch(`${serve}/entity/create`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify(ent),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  updateEntity(ent: any) {
+    return fetch(`${serve}/entity/update`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify(ent),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  moveEntity(params: any) {
+    return fetch(`${serve}/entity/move`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify(params),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  deleteEntity(id: any) {
+    return fetch(`${serve}/entity/remove?id=${id}`, { ...CREDENTIALS })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
   // 属性 Property
   fetchPropertyList({ repositoryId = '', moduleId = '', interfaceId = '', name = '' }: any = {}) {
     return fetch(
@@ -226,6 +287,16 @@ export default {
   },
   updateProperties(itf: any, properties: any, summary: any) {
     return fetch(`${serve}/properties/update?itf=${itf}`, {
+      ...CREDENTIALS,
+      method: 'POST',
+      body: JSON.stringify({ properties, summary }),
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(res => res.json())
+      .then(json => json.data)
+  },
+  updateEntityProperties(ent: any, properties: any, summary: any) {
+    return fetch(`${serve}/entity/properties/update?ent=${ent}`, {
       ...CREDENTIALS,
       method: 'POST',
       body: JSON.stringify({ properties, summary }),

@@ -3,12 +3,16 @@
   1. 属性名
   2. 类型
     * String
-    * Number
+    * Int
+    * Long
     * Boolean
-    * Function
-    * RegExp
+    * Short
+    * Byte
+    * Double
     * Object
-    * Array
+    * List
+    * Set
+    * Map
   3. 生成规则
   4. 初始值
 */
@@ -22,7 +26,13 @@ const fixValue = ({ type, value }: Readonly<any>) => {
   switch (type) {
     case 'String':
       return value
-    case 'Number':
+    case 'Int':
+      try { // eslint-disable-next-line
+        return eval(`(${value})`)
+      } catch (e) {
+        return 1
+      }
+    case 'Long':
       try { // eslint-disable-next-line
         return eval(`(${value})`)
       } catch (e) {
@@ -34,20 +44,32 @@ const fixValue = ({ type, value }: Readonly<any>) => {
       } catch (e) {
         return true
       }
-    case 'Function':
-    case 'RegExp':
+    case 'Short':
       try { // eslint-disable-next-line
         return eval(`(${value})`)
       } catch (e) {
-        console.warn(type, value)
+        return 1
       }
-      break
+    case 'Byte':
+      try { // eslint-disable-next-line
+        return eval(`(${value})`)
+      } catch (e) {
+        return 1
+      }
+    case 'Double':
+      try { // eslint-disable-next-line
+        return eval(`(${value})`)
+      } catch (e) {
+        return 1
+      }
     case 'Object':
       return {}
-    case 'Array':
+    case 'List':
       return []
-    case 'Null':
-      return null
+    case 'Set':
+      return []
+    case 'Map':
+      return {}
     default:
       return value
   }

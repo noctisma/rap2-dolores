@@ -7,11 +7,9 @@ import * as Yup from 'yup'
 import { Button, Theme, Dialog, DialogContent, DialogTitle, Select, MenuItem, InputLabel, FormControl } from '@material-ui/core'
 import { makeStyles } from '@material-ui/styles'
 import { SlideUp } from 'components/common/Transition'
-import { Interface, Repository, RootState, Module } from '../../actions/types'
-import { updateInterface, addInterface } from '../../actions/interface'
-export const METHODS = ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD']
-export const INTERFACE_TYPES = ['Rest', 'Thrift']
-export const STATUS_LIST = [200, 301, 403, 404, 500, 502, 503, 504]
+import { Entity, Repository, RootState, Module } from '../../actions/types'
+import { updateEntity, addEntity } from '../../actions/entity'
+export const STRUCT_TYPE = ['STRUCT', 'EXCEPTION', 'UNION']
 
 const useStyles = makeStyles(({ spacing }: Theme) => ({
   root: {
@@ -42,35 +40,33 @@ const useStyles = makeStyles(({ spacing }: Theme) => ({
   },
 }))
 
-const schema = Yup.object().shape<Partial<Interface>>({
+const schema = Yup.object().shape<Partial<Entity>>({
   name: Yup.string().required(YUP_MSG.REQUIRED).max(20, YUP_MSG.MAX_LENGTH(20)),
   description: Yup.string().max(1000, YUP_MSG.MAX_LENGTH(1000)),
 })
 
-const FORM_STATE_INIT: Interface = {
+const FORM_STATE_INIT: Entity = {
   id: 0,
   name: '',
-  type: '',
-  url: '',
-  method: 'GET',
+  namespace: '',
+  type: STRUCT_TYPE[0],
   description: '',
   repositoryId: 0,
-  moduleId: 0,
-  status: 200,
+  moduleId: 0
 }
 
 interface Props {
   title?: string
   open: boolean
   onClose: (isOk?: boolean) => void
-  itf?: Interface
+  ent?: Entity
   repository?: Repository
   mod?: Module
 }
 
 function InterfaceForm(props: Props) {
   const auth = useSelector((state: RootState) => state.auth)
-  const { open, onClose, itf, title, repository, mod } = props
+  const { open, onClose, ent, title, repository, mod } = props
   const classes = useStyles()
   const dispatch = useDispatch()
 
@@ -86,21 +82,21 @@ function InterfaceForm(props: Props) {
           <Formik
             initialValues={{
               ...FORM_STATE_INIT,
-              ...(itf || {}),
+              ...(ent || {}),
             }}
             validationSchema={schema}
             onSubmit={values => {
-              const addOrUpdateInterface = values.id
-                ? updateInterface
-                : addInterface
-              const itf: Interface = {
+              const addOrUpdateEntity = values.id
+                ? updateEntity
+                : addEntity
+              const ent: Entity = {
                 ...values,
                 creatorId: auth.id,
                 repositoryId: repository!.id,
                 moduleId: mod!.id,
               }
               dispatch(
-                addOrUpdateInterface(itf, () => {
+                addOrUpdateEntity(ent, () => {
                   // dispatch(refresh())
                   onClose(true)
                 })
@@ -119,70 +115,37 @@ function InterfaceForm(props: Props) {
                       />
                     </div>
                     <div className={classes.formItem}>
+                      <Field
+                        name="namespace"
+                        label="包名"
+                        component={TextField}
+                        fullWidth={true}
+                      />
+                    </div>
+                    <div className={classes.formItem}>
                       <FormControl>
                         <InputLabel
                           shrink={true}
                           htmlFor="method-label-placeholder"
                         >
-                          接口类型
+                          类型
                         </InputLabel>
                         <Select
                           value={values.type}
                           displayEmpty={true}
-                          name="type"
+                          name="method"
                           onChange={selected => {
                             setFieldValue('type', selected.target.value)
                           }}
                         >
-                          {INTERFACE_TYPES.map(method => (
-                            <MenuItem key={method} value={method}>
-                              {method}
+                          {STRUCT_TYPE.map(type => (
+                            <MenuItem key={type} value={type}>
+                              {type}
                             </MenuItem>
                           ))}
                         </Select>
                       </FormControl>
                     </div>
-                    <div className={classes.formItem}>
-                      <Field
-                        name="url"
-                        label="地址"
-                        component={TextField}
-                        fullWidth={true}
-                      />
-                    </div>
-                    <div className={classes.formItem}>
-                      <Field
-                        name="method"
-                        label="请求方法"
-                        component={TextField}
-                        fullWidth={true}
-                      />
-                    </div>
-                    {values.type === 'Rest' ?
-                      <div className={classes.formItem}>
-                        <InputLabel
-                          shrink={true}
-                          htmlFor="method-label-placeholder"
-                        >
-                          状态码
-                        </InputLabel>
-                        <Select
-                          value={values.status}
-                          displayEmpty={true}
-                          name="status"
-                          onChange={selected => {
-                            setFieldValue('status', selected.target.value)
-                          }}
-                        >
-                          {STATUS_LIST.map(status => (
-                            <MenuItem key={status} value={status}>
-                              {status}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </div>
-                      : ''
-                    }
                     <div className={classes.formItem}>
                       <Field
                         name="description"

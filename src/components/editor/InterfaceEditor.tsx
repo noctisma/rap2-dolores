@@ -21,6 +21,13 @@ export const RequestPropertyList = (props: any) => {
 export const ResponsePropertyList = (props: any) => (
   <PropertyList scope="response" title="响应内容" label="响应" {...props} />
 )
+/**
+ * Thrift专用自定义异常
+ * @param props
+ */
+export const ExceptionPropertyList = (props: any) => (
+  <PropertyList scope="exception" title="异常" label="异常" {...props} />
+)
 type InterfaceEditorProps = {
   auth: any
   itf: any
@@ -102,7 +109,7 @@ class InterfaceEditor extends Component<InterfaceEditorProps, InterfaceEditorSta
   fetchInterfaceProperties() {
     // 发现接口信息没有 properties 就发起请求
     if (this.state.properties === undefined) {
-      this.props.fetchInterface(this.state.itf.id, () => {})
+      this.props.fetchInterface(this.state.itf.id, () => { })
     }
   }
 
@@ -169,10 +176,25 @@ class InterfaceEditor extends Component<InterfaceEditorProps, InterfaceEditorSta
               handleChangeProperty={this.handleChangeProperty}
               handleDeleteMemoryProperty={this.handleDeleteMemoryProperty}
             />
+            {
+              itf.type === 'Thrift' ?
+                <ExceptionPropertyList
+                  properties={this.state.properties}
+                  auth={auth}
+                  editable={editable}
+                  repository={repository}
+                  mod={mod}
+                  interfaceId={itf.id}
+                  handleChangeProperty={this.handleChangeProperty}
+                  handleDeleteMemoryProperty={this.handleDeleteMemoryProperty}
+                />
+                :
+                ''
+            }
           </>
         ) : (
-          <Spin />
-        )}
+            <Spin />
+          )}
 
         {this.state.moveInterfaceDialogOpen && (
           <MoveInterfaceForm
@@ -266,6 +288,7 @@ class InterfaceEditor extends Component<InterfaceEditorProps, InterfaceEditorSta
         /** empty */
       },
     )
+    console.log(this.state.properties)
     updateProperties(this.state.itf.id, this.state.properties, this.state.summaryState, () => {
       this.handleUnlockInterface()
     })
@@ -280,10 +303,12 @@ class InterfaceEditor extends Component<InterfaceEditorProps, InterfaceEditorSta
   }
   handleLockInterface = () => {
     const { itf, lockInterface } = this.props
+    console.log(itf)
     lockInterface(itf.id)
   }
   handleUnlockInterface = () => {
     const { itf, unlockInterface } = this.props
+    console.log(itf)
     unlockInterface(itf.id)
   }
 }

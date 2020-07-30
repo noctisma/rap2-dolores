@@ -1,6 +1,8 @@
 import * as PropertyAction from '../actions/property'
 import * as PropertyEffects from './effects/property'
 import * as InterfaceAction from '../actions/interface'
+import * as EntityAction from '../actions/entity'
+
 import * as InterfaceEffects from './effects/interface'
 import * as ModuleAction from '../actions/module'
 import * as ModuleEffects from './effects/module'
@@ -18,7 +20,7 @@ export default {
       },
       action: any
     ) {
-      let modules, itfId: any, locker: any, properties: any, itf: any, mod: any
+      let modules, itfId: any, locker: any, properties: any, itf: any, mod: any, ent: any, entId: any
       switch (action.type) {
         case RepositoryAction.fetchRepository({
           id: undefined,
@@ -86,7 +88,121 @@ export default {
               })),
             },
           }
+        }case EntityAction.fetchEntitySucceeded(undefined).type: {
+          modules = state.data.modules
+          const fetchedEnt = _.omit(action.payload, ['requestProperties', 'responseProperties'])
+          return {
+            ...state,
+            data: {
+              ...state.data,
+              modules: modules.map((mod: any) => ({
+                ...mod,
+                entities: mod.entities.map((itf: any) => {
+                  if (itf.id !== fetchedEnt.id) {
+                    return itf
+                  }
+                  return {
+                    ...ent,
+                    ...fetchedEnt,
+                  }
+                }),
+              })),
+            },
+          }
         }
+        case EntityAction.lockEntitySucceeded(undefined, undefined).type:
+          modules = state.data.modules
+          entId = action.payload.entId
+          locker = action.payload.locker
+          return {
+            ...state,
+            data: {
+              ...state.data,
+              modules: modules.map((mod: any) => ({
+                ...mod,
+                entities: mod.entities.map((ent: any) => {
+                  if (ent.id !== entId) {
+                    return ent
+                  }
+                  return {
+                    ...ent,
+                    lockerId: locker.id,
+                    locker,
+                    updatedAt: new Date(),
+                  }
+                }),
+              })),
+            },
+          }
+          case EntityAction.unlockEntitySucceeded(undefined).type:
+            console.log(action)
+            modules = state.data.modules
+            entId = action.payload.entId
+            return {
+            ...state,
+            data: {
+              ...state.data,
+              modules: modules.map((mod: any) => ({
+                ...mod,
+                entities: mod.entities.map((ent: any) => {
+                  if (ent.id !== entId) {
+                    return ent
+                  }
+                  return {
+                    ...ent,
+                    lockerId: null,
+                    locker: null,
+                    updatedAt: new Date(),
+                  }
+                }),
+              })),
+            },
+          }
+          case PropertyAction.updateEntityPropertiesSucceeded(undefined).type:
+          modules = state.data.modules
+          entId = action.payload.entId
+          properties = action.payload.properties
+          return {
+            ...state,
+            data: {
+              ...state.data,
+              modules: modules.map((mod: any) => ({
+                ...mod,
+                entities: mod.entities.map((ent: any) => {
+                  if (ent.id !== entId) {
+                    return ent
+                  }
+                  return {
+                    ...ent,
+                    properties,
+                    updatedAt: new Date(),
+                  }
+                }),
+              })),
+            },
+          }
+        case EntityAction.updateEntitySucceeded(undefined).type:
+          modules = state.data.modules
+          ent = action.payload.ent
+          return {
+            ...state,
+            data: {
+              ...state.data,
+              modules: modules.map((mod: any) => ({
+                ...mod,
+                entities: mod.entities.map((x: any) => {
+                  if (x.id !== ent.id) {
+                    return x
+                  }
+                  return {
+                    ...ent,
+                    locker: x.locker,
+                    properties: x.properties,
+                  }
+                }),
+              })),
+            },
+          }
         case InterfaceAction.unlockInterfaceSucceeded(undefined).type:
           modules = state.data.modules
           itfId = action.payload.itfId

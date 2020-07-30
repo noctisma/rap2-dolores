@@ -11,6 +11,7 @@ import { TYPES } from '../../utils/consts'
 import PropertyForm from './PropertyForm'
 import Importer from './Importer'
 import Previewer from './InterfacePreviewer'
+import PropertyTypeSelect from './PropertyTypeSelect'
 import { GoPlus, GoTrashcan, GoQuestion, GoChevronDown, GoChevronRight } from 'react-icons/go'
 import { rptFromStr2Num } from './InterfaceSummary'
 import './PropertyList.css'
@@ -20,32 +21,33 @@ import _ from 'lodash'
 import Mock from 'mockjs'
 import JSON5 from 'json5'
 import { elementInViewport } from 'utils/ElementInViewport'
+import { Property } from 'actions/types'
 
 const mockProperty =
   process.env.NODE_ENV === 'development'
     ? () =>
-        Mock.mock({
-          'scope|1': ['request', 'response'],
-          name: '@WORD(6)',
-          'type|1': ['String', 'Boolean'],
-          'value|1': ['@INT', '@FLOAT', '@TITLE', '@NAME'],
-          description: '@CSENTENCE',
-          parentId: -1,
-          interfaceId: '@NATURAL',
-          moduleId: '@NATURAL',
-          repositoryId: '@NATURAL',
-        })
-    : () => ({
-        scope: 'response',
-        name: '',
-        type: 'String',
-        value: '',
-        description: '',
+      Mock.mock({
+        'scope|1': ['request', 'response'],
+        name: '@WORD(6)',
+        'type|1': ['String', 'Boolean'],
+        'value|1': ['@INT', '@FLOAT', '@TITLE', '@NAME'],
+        description: '@CSENTENCE',
         parentId: -1,
-        interfaceId: undefined,
-        moduleId: undefined,
-        repositoryId: undefined,
+        entityId: '@NATURAL',
+        moduleId: '@NATURAL',
+        repositoryId: '@NATURAL',
       })
+    : () => ({
+      scope: 'response',
+      name: '',
+      type: 'String',
+      value: '',
+      description: '',
+      parentId: -1,
+      entityId: undefined,
+      moduleId: undefined,
+      repositoryId: undefined,
+    })
 
 export const RequestPropertyListPreviewer = (props: any) => (
   <Previewer {...props} />
@@ -143,14 +145,14 @@ interface SortableTreeTableRowState {
     children: any[];
     [k: string]: any;
   }
-  interfaceId: number
+  entityId: number
   childrenAdded: boolean
   childrenExpandingIdList: number[]
 }
 interface SortableTreeTableRowProps {
   /** 当前层级是不是展开 */
   isExpanding: boolean
-  interfaceId: number
+  entityId: number
   [k: string]: any
 }
 class SortableTreeTableRow extends Component<SortableTreeTableRowProps, SortableTreeTableRowState> {
@@ -163,16 +165,17 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
       property: { children: [] },
       childrenAdded: false,
       childrenExpandingIdList: [],
-      interfaceId: -1,
+      entityId: -1,
     }
   }
+
   static getDerivedStateFromProps(nextProps: any, prevState: any) {
     return {
-      interfaceId: nextProps.interfaceId,
+      entityId: nextProps.entityId,
       property: nextProps.property,
       childrenAdded: nextProps.property.children.length > prevState.property.children.length,
       childrenExpandingIdList:
-        nextProps.interfaceId !== prevState.interfaceId
+        nextProps.entityId !== prevState.entityId
           ? nextProps.property.children.map((item: any) => item.id)
           : prevState.childrenExpandingIdList,
     }
@@ -199,15 +202,17 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
     const {
       property,
       isExpanding,
-      interfaceId,
+      entityId,
       editable,
       handleClickCreateChildPropertyButton,
       highlightId,
       handleDeleteMemoryProperty,
       handleChangeProperty,
       handleChangePropertyField,
+      handleTypeClickOpen,
       handleSortProperties,
     } = this.props
+
     return (
       isExpanding && (
         <RSortable
@@ -230,27 +235,27 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                     >
                       <div className="td operations nowrap">
                         {(item.type === 'Object' || item.type === 'List' || item.type === 'Set' || item.type === 'Map') &&
-                        item.children &&
-                        item.children.length ? (
-                          <Link
-                            to=""
-                            onClick={e => {
-                              e.preventDefault()
-                              this.setState(prev => ({
-                                ...prev,
-                                childrenExpandingIdList: childrenIsExpanding
-                                  ? prev.childrenExpandingIdList.filter(id => id !== item.id)
-                                  : [...prev.childrenExpandingIdList, item.id],
-                              }))
-                            }}
-                          >
-                            {childrenIsExpanding ? (
-                              <GoChevronDown className="fontsize-14 color-6" />
-                            ) : (
-                              <GoChevronRight className="fontsize-14 color-6" />
-                            )}
-                          </Link>
-                        ) : null}
+                          item.children &&
+                          item.children.length ? (
+                            <Link
+                              to=""
+                              onClick={e => {
+                                e.preventDefault()
+                                this.setState(prev => ({
+                                  ...prev,
+                                  childrenExpandingIdList: childrenIsExpanding
+                                    ? prev.childrenExpandingIdList.filter(id => id !== item.id)
+                                    : [...prev.childrenExpandingIdList, item.id],
+                                }))
+                              }}
+                            >
+                              {childrenIsExpanding ? (
+                                <GoChevronDown className="fontsize-14 color-6" />
+                              ) : (
+                                  <GoChevronRight className="fontsize-14 color-6" />
+                                )}
+                            </Link>
+                          ) : null}
                         {editable && (
                           <>
                             {item.type === 'Object' || item.type === 'List' || item.type === 'Set' || item.type === 'Map' ? (
@@ -277,34 +282,20 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                           </>
                         )}
                       </div>
-                      <div className={`td payload index depth-${item.depth} nowrap`}>
+                      <div className="td payload index nowrap">
                         {!editable ? (
-                          <>
-                            <CopyToClipboard text={item.name} type="right">
-                              <span className="name-wrapper nowrap">{item.name}</span>
-                            </CopyToClipboard>
-                            {item.scope === 'request' && item.depth === 0 ? (
-                              <div style={{ margin: '1px 0 0 3px' }}>
-                                <PropertyLabel pos={item.pos} />
-                              </div>
-                            ) : null}
-                          </>
+                          <span className="nowrap">{item.index}</span>
                         ) : (
-                          <input
-                            ref={(input: HTMLInputElement) => {
-                              if (item.id === highlightId) {
-                                this.focusNameInput = input
+                            <input
+                              value={item.index || ''}
+                              onChange={e =>
+                                handleChangePropertyField(item.id, 'index', e.target.value)
                               }
-                            }}
-                            value={item.name}
-                            onChange={e =>
-                              handleChangePropertyField(item.id, 'name', e.target.value)
-                            }
-                            className="form-control editable"
-                            spellCheck={false}
-                            placeholder=""
-                          />
-                        )}
+                              className="form-control editable"
+                              spellCheck={false}
+                              placeholder=""
+                            />
+                          )}
                       </div>
                       <div className={`td payload name depth-${item.depth} nowrap`}>
                         {!editable ? (
@@ -319,21 +310,21 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                             ) : null}
                           </>
                         ) : (
-                          <input
-                            ref={(input: HTMLInputElement) => {
-                              if (item.id === highlightId) {
-                                this.focusNameInput = input
+                            <input
+                              ref={(input: HTMLInputElement) => {
+                                if (item.id === highlightId) {
+                                  this.focusNameInput = input
+                                }
+                              }}
+                              value={item.name}
+                              onChange={e =>
+                                handleChangePropertyField(item.id, 'name', e.target.value)
                               }
-                            }}
-                            value={item.name}
-                            onChange={e =>
-                              handleChangePropertyField(item.id, 'name', e.target.value)
-                            }
-                            className="form-control editable"
-                            spellCheck={false}
-                            placeholder=""
-                          />
-                        )}
+                              className="form-control editable"
+                              spellCheck={false}
+                              placeholder=""
+                            />
+                          )}
                       </div>
                       <div className={`td payload required type depth-${item.depth} nowrap`}>
                         <Checkbox
@@ -355,43 +346,26 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                             <span className="nowrap">{item.type}</span>
                           </CopyToClipboard>
                         ) : (
-                          <select
-                            value={item.type}
-                            onChange={e => {
-                              const type = e.target.value
-                              if (isNoValueType(type)) {
-                                handleChangeProperty(item.id, {
-                                  value: '',
-                                  type,
-                                })
-                              } else {
-                                handleChangeProperty(item.id, { type })
-                              }
-                            }}
-                            className="form-control editable"
-                          >
-                            {TYPES.map(type => (
-                              <option key={type} value={type}>
-                                {type}
-                              </option>
-                            ))}
-                          </select>
-                        )}
+                            // <span onClick={()=>handleTypeClickOpen(item)}>{item.type}</span>
+                            <Button size="small" onClick={() => handleTypeClickOpen(item)} className="type-button">
+                              <span className="nowrap">{item.type}</span>
+                            </Button>
+                          )}
                       </div>
                       <div className="td payload rule nowrap">
                         {!editable ? (
                           <span className="nowrap">{item.rule}</span>
                         ) : (
-                          <input
-                            value={item.rule || ''}
-                            onChange={e =>
-                              handleChangePropertyField(item.id, 'rule', e.target.value)
-                            }
-                            className="form-control editable"
-                            spellCheck={false}
-                            placeholder=""
-                          />
-                        )}
+                            <input
+                              value={item.rule || ''}
+                              onChange={e =>
+                                handleChangePropertyField(item.id, 'rule', e.target.value)
+                              }
+                              className="form-control editable"
+                              spellCheck={false}
+                              placeholder=""
+                            />
+                          )}
                       </div>
                       <div className="td payload value">
                         {!editable ? (
@@ -399,18 +373,18 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                             <span className="value-container">{getFormattedValue(item)}</span>
                           </CopyToClipboard>
                         ) : (
-                          <SmartTextarea
-                            value={item.value || ''}
-                            onChange={(e: any) =>
-                              handleChangePropertyField(item.id, 'value', e.target.value)
-                            }
-                            disabled={isNoValueType(item.type) && !item.value}
-                            rows="1"
-                            className="form-control editable"
-                            spellCheck={false}
-                            placeholder=""
-                          />
-                        )}
+                            <SmartTextarea
+                              value={item.value || ''}
+                              onChange={(e: any) =>
+                                handleChangePropertyField(item.id, 'value', e.target.value)
+                              }
+                              disabled={isNoValueType(item.type) && !item.value}
+                              rows="1"
+                              className="form-control editable"
+                              spellCheck={false}
+                              placeholder=""
+                            />
+                          )}
                       </div>
                       <div className="td payload desc">
                         {!editable ? (
@@ -418,24 +392,24 @@ class SortableTreeTableRow extends Component<SortableTreeTableRowProps, Sortable
                             <span>{item.description}</span>
                           </CopyToClipboard>
                         ) : (
-                          <SmartTextarea
-                            value={item.description || ''}
-                            onChange={(e: any) =>
-                              handleChangePropertyField(item.id, 'description', e.target.value)
-                            }
-                            rows="1"
-                            className="form-control editable"
-                            spellCheck={false}
-                            placeholder=""
-                          />
-                        )}
+                            <SmartTextarea
+                              value={item.description || ''}
+                              onChange={(e: any) =>
+                                handleChangePropertyField(item.id, 'description', e.target.value)
+                              }
+                              rows="1"
+                              className="form-control editable"
+                              spellCheck={false}
+                              placeholder=""
+                            />
+                          )}
                       </div>
                     </div>
                     {item.children && item.children.length ? (
                       <SortableTreeTableRow
                         editable={editable}
                         highlightId={highlightId}
-                        interfaceId={interfaceId}
+                        entityId={entityId}
                         handleClickCreateChildPropertyButton={handleClickCreateChildPropertyButton}
                         handleDeleteMemoryProperty={handleDeleteMemoryProperty}
                         handleChangeProperty={handleChangeProperty}
@@ -460,11 +434,12 @@ class SortableTreeTable extends Component<any, any> {
       root,
       editable,
       highlightId,
-      interfaceId,
+      entityId,
       handleClickCreateChildPropertyButton,
       handleDeleteMemoryProperty,
       handleChangeProperty,
       handleChangePropertyField,
+      handleTypeClickOpen,
       handleSortProperties,
     } = this.props
     return (
@@ -477,8 +452,9 @@ class SortableTreeTable extends Component<any, any> {
           handleDeleteMemoryProperty={handleDeleteMemoryProperty}
           handleChangeProperty={handleChangeProperty}
           handleChangePropertyField={handleChangePropertyField}
+          handleTypeClickOpen={handleTypeClickOpen}
           handleSortProperties={handleSortProperties}
-          interfaceId={interfaceId}
+          entityId={entityId}
           property={root}
           isExpanding={true}
         />
@@ -487,7 +463,7 @@ class SortableTreeTable extends Component<any, any> {
   }
 }
 
-class PropertyList extends PureComponent<any, any> {
+class EntityPropertyList extends PureComponent<any, any> {
 
   static propTypes = {
     title: PropTypes.string.isRequired,
@@ -497,7 +473,7 @@ class PropertyList extends PureComponent<any, any> {
     auth: PropTypes.object.isRequired,
     repository: PropTypes.object.isRequired,
     mod: PropTypes.object.isRequired,
-    interfaceId: PropTypes.number.isRequired,
+    entityId: PropTypes.number.isRequired,
     editable: PropTypes.bool.isRequired,
     /** optional */
     bodyOption: PropTypes.string,
@@ -514,6 +490,8 @@ class PropertyList extends PureComponent<any, any> {
       createChildProperty: false,
       previewer: props.scope === 'response',
       importer: false,
+      typeSelectOpen: false,
+      curProperty: {}
     }
   }
   render() {
@@ -524,9 +502,10 @@ class PropertyList extends PureComponent<any, any> {
       properties = [],
       repository = {},
       mod = {},
-      interfaceId,
+      entityId,
     } = this.props
-    if (!interfaceId) {
+    console.log(this.props)
+    if (!entityId) {
       return null
     }
     const { editable, requestParamsType } = this.props // itf.locker && (itf.locker.id === auth.id)
@@ -541,6 +520,17 @@ class PropertyList extends PureComponent<any, any> {
     return (
       <section className="PropertyList">
         <div className="header clearfix">
+          {this.state.curProperty === undefined ?
+            ''
+            :
+            <PropertyTypeSelect
+              handleChangePropertyField={this.handleChangePropertyField}
+              entities={mod.entities}
+              property={this.state.curProperty}
+              open={this.state.typeSelectOpen}
+              onClose={() => this.setState({ typeSelectOpen: false })}
+            />
+          }
           <span className="title">{title || `${label}属性`}</span>
           <div className="toolbar">
             <ButtonGroup size="small" color="primary">
@@ -566,10 +556,11 @@ class PropertyList extends PureComponent<any, any> {
             root={Tree.arrayToTree(scopedProperties)}
             editable={editable}
             highlightId={this.state.highlightId}
-            interfaceId={interfaceId}
+            entityId={entityId}
             handleClickCreateChildPropertyButton={this.handleClickCreateChildPropertyButton}
             handleDeleteMemoryProperty={this.handleDeleteMemoryProperty}
             handleChangePropertyField={this.handleChangePropertyField}
+            handleTypeClickOpen={this.handleTypeClickOpen}
             handleChangeProperty={this.handleChangeProperty}
             handleSortProperties={this.handleSortProperties}
             handleClickCreatePropertyButton={this.handleClickCreatePropertyButton}
@@ -581,7 +572,7 @@ class PropertyList extends PureComponent<any, any> {
               scope={scope}
               label={label}
               properties={properties}
-              interfaceId={interfaceId}
+              entityId={entityId}
             />
           )}
         </div>
@@ -595,7 +586,7 @@ class PropertyList extends PureComponent<any, any> {
             scope={scope}
             repository={repository}
             mod={mod}
-            interfaceId={interfaceId}
+            entityId={entityId}
           />
         </RModal>
         <RModal
@@ -608,7 +599,7 @@ class PropertyList extends PureComponent<any, any> {
             scope={scope}
             repository={repository}
             mod={mod}
-            interfaceId={interfaceId}
+            entityId={entityId}
             parent={this.state.createChildProperty}
           />
         </RModal>
@@ -621,7 +612,7 @@ class PropertyList extends PureComponent<any, any> {
             title={`导入${label}属性`}
             repository={repository}
             mod={mod}
-            interfaceId={interfaceId}
+            entityId={entityId}
             scope={scope}
           />
         </RModal>
@@ -633,7 +624,7 @@ class PropertyList extends PureComponent<any, any> {
   }
   handleClickCreateChildPropertyButton = (parent: any = { id: -1 }) => {
     const { handleAddMemoryProperty } = this.context
-    const { auth, scope, repository = {}, mod = {}, interfaceId } = this.props
+    const { auth, scope, repository = {}, mod = {}, entityId } = this.props
     const childId = _.uniqueId('memory-')
     const child = {
       ...mockProperty(),
@@ -641,7 +632,7 @@ class PropertyList extends PureComponent<any, any> {
       creatorId: auth.id,
       repositoryId: repository.id,
       moduleId: mod.id,
-      interfaceId,
+      entityId,
       scope,
       parentId: parent.id,
     }
@@ -670,6 +661,12 @@ class PropertyList extends PureComponent<any, any> {
     const property = properties.find((property: any) => property.id === id)
     handleChangeProperty({ ...property, ...value })
   }
+  handleTypeClickOpen = (property: Property) => {
+    this.setState({
+      curProperty: property,
+      typeSelectOpen: true,
+    })
+  }
   handleCreatePropertySucceeded = () => {
     /** empty */
   }
@@ -688,4 +685,4 @@ class PropertyList extends PureComponent<any, any> {
   }
 }
 
-export default PropertyList
+export default EntityPropertyList

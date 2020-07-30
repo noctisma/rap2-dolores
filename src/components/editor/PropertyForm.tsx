@@ -11,7 +11,7 @@ export const mockProperty = process.env.NODE_ENV === 'development'
   ? () => Mock.mock({
     'scope|1': ['request', 'response'],
     name: '@WORD(6)',
-    'type|1': ['String', 'Number', 'Boolean'],
+    'type|1': ['String', 'Int', 'Long', 'Boolean', 'Short', 'Byte', 'Double'],
     'value|1': ['@INT', '@FLOAT', '@TITLE', '@NAME'],
     description: '@CSENTENCE',
     parentId: -1,
@@ -57,17 +57,33 @@ class PropertyForm extends Component<any, any> {
         <form className="form-horizontal w600" onSubmit={this.handleSubmit}>
           <div className="rmodal-body">
             <div className="form-group row" style={{}}>
+              <label className="col-sm-2 control-label">序号：</label>
+              <div className="col-sm-10">
+                <input
+                  name="index"
+                  tabIndex={1}
+                  value={this.state.index}
+                  onChange={e => this.setState({ index: e.target.value })}
+                  className="form-control"
+                  placeholder="Name"
+                  spellCheck={false}
+                  autoFocus={true}
+                  required={true}
+                />
+              </div>
+            </div>
+            <div className="form-group row" style={{}}>
               <label className="col-sm-2 control-label">名称：</label>
               <div className="col-sm-10">
                 <input
                   name="name"
-                  tabIndex={1}
+                  tabIndex={2}
                   value={this.state.name}
                   onChange={e => this.setState({ name: e.target.value })}
                   className="form-control"
                   placeholder="Name"
                   spellCheck={false}
-                  autoFocus={true}
+                  autoFocus={false}
                   required={true}
                 />
               </div>
@@ -77,7 +93,7 @@ class PropertyForm extends Component<any, any> {
               <div className="col-sm-10">
                 <select
                   name="type"
-                  tabIndex={2}
+                  tabIndex={3}
                   value={this.state.type}
                   onChange={e => {
                     const type = e.target.value
@@ -101,7 +117,7 @@ class PropertyForm extends Component<any, any> {
               <div className="col-sm-10">
                 <input
                   name="rule"
-                  tabIndex={3}
+                  tabIndex={4}
                   value={this.state.rule}
                   onChange={e => this.setState({ rule: e.target.value })}
                   className="form-control"
@@ -115,7 +131,7 @@ class PropertyForm extends Component<any, any> {
               <div className="col-sm-10">
                 <input
                   name="value"
-                  tabIndex={4}
+                  tabIndex={5}
                   value={this.state.value}
                   onChange={e => this.setState({ value: e.target.value })}
                   className="form-control"
@@ -128,7 +144,7 @@ class PropertyForm extends Component<any, any> {
               <label className="col-sm-2 control-label">简介：</label>
               <div className="col-sm-10">
                 <SmartTextarea
-                  tabIndex={5}
+                  tabIndex={6}
                   name="description"
                   value={this.state.description}
                   onChange={(e: any) => this.setState({ description: e.target.value })}

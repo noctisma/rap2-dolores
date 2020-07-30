@@ -158,6 +158,8 @@ export interface Module {
 
   interfaces?: Interface[]
 
+  entities?: Entity[]
+
   repository?: Repository
 
   repositoryId?: number
@@ -167,6 +169,8 @@ export interface Interface {
   id: number
 
   name: string
+
+  type: string
 
   url: string
 
@@ -191,7 +195,34 @@ export interface Interface {
   status?: number
 }
 
+export interface Entity {
+  id: number
+
+  name: string
+
+  type: string
+
+  namespace: string
+
+  description?: string
+
+  moduleId?: number
+
+  creatorId?: number
+
+  lockerid?: number
+
+  locker?: User
+
+  repositoryId?: number
+
+  repository?: Repository
+
+//  properties?: Property[]
+}
+
 export type Property = {
+  index: number
   name: string;
   type: any;
   rule: string;

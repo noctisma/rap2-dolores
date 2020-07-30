@@ -40,10 +40,16 @@ const treeToJson = (tree: any) => {
       case 'String':
         result[item.name + rule] = value
         break
-      case 'Number': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
+      case 'Int': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
         if (value === '') { value = 1 } // 如果未填初始值，则默认为 1
-        const parsed = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
-        if (!isNaN(parsed)) { value = parsed }
+        const parsedInt = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
+        if (!isNaN(parsedInt)) { value = parsedInt }
+        result[item.name + rule] = value
+        break
+      case 'Long': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
+        if (value === '') { value = 1 } // 如果未填初始值，则默认为 1
+        const parsedLong = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
+        if (!isNaN(parsedLong)) { value = parsedLong }
         result[item.name + rule] = value
         break
       case 'Boolean': // √ 处理字符串 'true|false'，以及没有输入值的情况
@@ -53,15 +59,23 @@ const treeToJson = (tree: any) => {
         value = !!value
         result[item.name + rule] = value
         break
-      case 'Function':
-      case 'RegExp':
-        try {
-          // eslint-disable-next-line
-          result[item.name + rule] = eval('(' + item.value + ')') // eslint-disable-line no-eval
-        } catch (e) {
-          console.warn(`{ ${item.name}: ${item.value} } => ${e.message}`) // TODO 2.2 初始值异常，应该直接提示到页面上。
-          result[item.name + rule] = item.value
-        }
+      case 'Short': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
+        if (value === '') { value = 1 } // 如果未填初始值，则默认为 1
+        const parsedShort = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
+        if (!isNaN(parsedShort)) { value = parsedShort }
+        result[item.name + rule] = value
+        break
+      case 'Byte': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
+        if (value === '') { value = 1 } // 如果未填初始值，则默认为 1
+        const parsedByte = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
+        if (!isNaN(parsedByte)) { value = parsedByte }
+        result[item.name + rule] = value
+        break
+      case 'Double': // √ BUG Number 如果没有输入初始值，会导致值变成字符串，所以需要对每种类型做特殊的初始值处理
+        if (value === '') { value = 1 } // 如果未填初始值，则默认为 1
+        const parsedDouble = parseFloat(value) // 尝试解析初始值，如果失败，则填什么是什么（字符串）
+        if (!isNaN(parsedDouble)) { value = parsedDouble }
+        result[item.name + rule] = value
         break
       case 'Object':
         if (item.value) {
@@ -78,7 +92,7 @@ const treeToJson = (tree: any) => {
           })
         }
         break
-      case 'Array':
+      case 'List':
         if (item.value) {
           try {
             // eslint-disable-next-line
@@ -93,8 +107,35 @@ const treeToJson = (tree: any) => {
           })
         }
         break
-      case 'Null':
-          result[item.name + rule] = null
+      case 'Set':
+          if (item.value) {
+            try {
+              // eslint-disable-next-line
+              result[item.name + rule] = eval(`(${item.value})`) // eslint-disable-line no-eval
+            } catch (e) {
+              result[item.name + rule] = item.value
+            }
+          } else {
+            result[item.name + rule] = item.children.length ? [{}] : []
+            item.children.forEach((child: any) => {
+              parse(child, result[item.name + rule][0])
+            })
+          }
+          break
+      case 'Map':
+          if (item.value) {
+            try {
+              // eslint-disable-next-line
+              result[item.name + rule] = eval(`(${item.value})`) // eslint-disable-line no-eval
+            } catch (e) {
+              result[item.name + rule] = item.value
+            }
+          } else {
+            result[item.name + rule] = {}
+            item.children.forEach((child: any) => {
+              parse(child, result[item.name + rule])
+            })
+          }
           break
       default:
         result[item.name + rule] = item.value

@@ -2,9 +2,11 @@ import React, { useState } from 'react'
 import { connect, Link, replace, StoreStateRouterLocationURI } from '../../family'
 import {  RSortable } from '../utils'
 import ModuleForm from './ModuleForm'
+
 import { useSelector, useDispatch } from 'react-redux'
-import { GoPackage } from 'react-icons/go'
+import { GoPackage, GoDiffModified } from 'react-icons/go'
 import { deleteModule, sortModuleList } from '../../actions/module'
+// import { deleteModel, sortModelList } from '../../actions/model'
 import { Module, Repository, RootState, User } from '../../actions/types'
 
 interface ModuleBaseProps {
@@ -30,6 +32,29 @@ function ModuleBase(props: ModuleBaseProps) {
   )
 }
 
+interface ModelBaseProps {
+  repository: Repository
+  active?: boolean
+  auth?: User
+  // deleteModule: typeof deleteModule
+  replace?: typeof replace
+}
+
+// function ModelBase(props: ModuleBaseProps) {
+//   const { model } = props
+//   const router = useSelector((state: RootState) => state.router)
+//   const uri = StoreStateRouterLocationURI(router).removeSearch('itf')
+//   const selectHref = uri.setSearch('model', mod!.id.toString()).href()
+
+//   return (
+//     <div className="Module clearfix">
+//       <Link to={selectHref} className="name">
+//         模型管理
+//       </Link>
+//     </div>
+//   )
+// }
+
 const mapStateToModuleBaseProps = (state: any) => ({
   router: state.router,
 })
@@ -40,6 +65,8 @@ const mapDispatchToModuleBaseProps = ({
 
 const ModuleWrap = connect(mapStateToModuleBaseProps, mapDispatchToModuleBaseProps)(ModuleBase)
 
+// const ModelWarp = connect()()
+
 interface ModuleListProps {
   mods?: Module[]
   mod?: Module
@@ -47,6 +74,8 @@ interface ModuleListProps {
 }
 function ModuleList(props: ModuleListProps) {
   const [open, setOpen] = useState(false)
+  const [modelOpen, setModelOpen] = useState(false)
+
   const dispatch = useDispatch()
   const auth = useSelector((state: RootState) => state.auth)
   const { repository, mods = [], mod } = props

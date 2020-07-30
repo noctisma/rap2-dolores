@@ -8,8 +8,8 @@ import {
   PropTypes
 } from '../../family'
 import { serve } from '../../relatives/services/constant'
-import { METHODS, STATUS_LIST, INTERFACE_TYPES } from './InterfaceForm'
-import { CopyToClipboard } from '../utils/'
+import { METHODS, STATUS_LIST } from './InterfaceForm'
+import { CopyToClipboard } from '../utils'
 import { getRelativeUrl } from '../../utils/URLUtils'
 import './InterfaceSummary.css'
 import { showMessage, MSG_TYPE } from 'actions/common'
@@ -106,7 +106,7 @@ type InterfaceSummaryState = {
 class InterfaceSummary extends Component<
   InterfaceSummaryProps,
   InterfaceSummaryState
-  > {
+> {
   static contextTypes = {
     onDeleteInterface: PropTypes.func.isRequired,
   }
@@ -241,86 +241,46 @@ class InterfaceSummary extends Component<
               </li>
               <li style={{ marginTop: 24 }}>
                 <FormControl>
-                  <InputLabel shrink={true} htmlFor="status-label-placeholder">
-                    接口类型
+                  <InputLabel shrink={true} htmlFor="method-label-placeholder">
+                    类型
                   </InputLabel>
                   <Select
-                    value={itf.type}
-                    input={<Input name="status" id="status-label-placeholder" />}
+                    value={itf.method}
+                    input={<Input name="method" id="method-label-placeholder" />}
                     onChange={e => {
-                      handleChangeInterface({ type: e.target.value })
+                      handleChangeInterface({ method: e.target.value })
                     }}
                     displayEmpty={true}
-                    name="type"
+                    name="method"
                   >
-                    {INTERFACE_TYPES.map(type => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                    {METHODS.map(method => (
+                      <MenuItem key={method} value={method}>
+                        {method}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
-                <FormControl>
-                  <InputLabel shrink={true} htmlFor="method-label-placeholder">
-                    请求方法
+                <FormControl style={{ marginLeft: 20 }}>
+                  <InputLabel shrink={true} htmlFor="status-label-placeholder">
+                    状态码
                   </InputLabel>
-                  {itf.type === 'Rest' ?
-
-                    <Select
-                      value={itf.method}
-                      input={<Input name="method" id="method-label-placeholder" />}
-                      onChange={e => {
-                        handleChangeInterface({ method: e.target.value })
-                      }}
-                      displayEmpty={true}
-                      name="method"
-                    >
-                      {METHODS.map(method => (
-                        <MenuItem key={method} value={method}>
-                          {method}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    :
-                    <TextField
-                      id="method"
-                      // label="请求方法"
-                      value={itf.method || ''}
-                      fullWidth={false}
-                      autoComplete="off"
-                      onChange={e => {
-                        handleChangeInterface({ method: e.target.value })
-                      }}
-                      margin="normal"
-                    />
-                  }
+                  <Select
+                    value={itf.status}
+                    input={<Input name="status" id="status-label-placeholder" />}
+                    onChange={e => {
+                      handleChangeInterface({ status: e.target.value })
+                    }}
+                    displayEmpty={true}
+                    name="status"
+                  >
+                    {STATUS_LIST.map(status => (
+                      <MenuItem key={status} value={status}>
+                        {status}
+                      </MenuItem>
+                    ))}
+                  </Select>
                 </FormControl>
-
-                {itf.type === 'Rest' ?
-                  <FormControl style={{ marginLeft: 20 }}>
-                    <InputLabel shrink={true} htmlFor="status-label-placeholder">
-                      状态码
-                  </InputLabel>
-                    <Select
-                      value={itf.status}
-                      input={<Input name="status" id="status-label-placeholder" />}
-                      onChange={e => {
-                        handleChangeInterface({ status: e.target.value })
-                      }}
-                      displayEmpty={true}
-                      name="status"
-                    >
-                      {STATUS_LIST.map(status => (
-                        <MenuItem key={status} value={status}>
-                          {status}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  : ''
-                }
               </li>
-
               <li style={{ width: '50%' }}>
                 <TextField
                   id="description"
@@ -337,53 +297,53 @@ class InterfaceSummary extends Component<
               </li>
             </>
           ) : (
-              <>
+            <>
+              <li>
+                <CopyToClipboard text={itf.url} type="right">
+                  <span className="mr5">
+                    <span className="label">地址：</span>
+                    <a
+                      href={`${serve}/app/mock/${repository.id}${getRelativeUrl(itf.url || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {itf.url}
+                    </a>
+                  </span>
+                </CopyToClipboard>
+              </li>
+              <li>
+                <CopyToClipboard text={itf.method}>
+                  <span>
+                    <span className="label">类型：</span>
+                    <span>{itf.method}</span>
+                  </span>
+                </CopyToClipboard>
+              </li>
+              <li>
+                <CopyToClipboard text={itf.status}>
+                  <span>
+                    <span className="label">状态码：</span>
+                    <span>{itf.status}</span>
+                  </span>
+                </CopyToClipboard>
+              </li>
+              {itf.description && (
                 <li>
-                  <CopyToClipboard text={itf.url} type="right">
-                    <span className="mr5">
-                      <span className="label">地址：</span>
-                      <a
-                        href={`${serve}/app/mock/${repository.id}${getRelativeUrl(itf.url || '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {itf.url}
-                      </a>
-                    </span>
-                  </CopyToClipboard>
-                </li>
-                <li>
-                  <CopyToClipboard text={itf.method}>
+                  <CopyToClipboard text={itf.description}>
                     <span>
-                      <span className="label">类型：</span>
-                      <span>{itf.method}</span>
+                      <span className="label" style={{ verticalAlign: 'top' }}>
+                        简介：
+                      </span>
+                      <span style={{ whiteSpace: 'pre-wrap', display: 'inline-block' }}>
+                        {itf.description}
+                      </span>
                     </span>
                   </CopyToClipboard>
                 </li>
-                <li>
-                  <CopyToClipboard text={itf.status}>
-                    <span>
-                      <span className="label">状态码：</span>
-                      <span>{itf.status}</span>
-                    </span>
-                  </CopyToClipboard>
-                </li>
-                {itf.description && (
-                  <li>
-                    <CopyToClipboard text={itf.description}>
-                      <span>
-                        <span className="label" style={{ verticalAlign: 'top' }}>
-                          简介：
-                      </span>
-                        <span style={{ whiteSpace: 'pre-wrap', display: 'inline-block' }}>
-                          {itf.description}
-                        </span>
-                      </span>
-                    </CopyToClipboard>
-                  </li>
-                )}
-              </>
-            )}
+              )}
+            </>
+          )}
         </ul>
         {editable && (
           <ul className="nav nav-tabs" role="tablist">
@@ -394,7 +354,7 @@ class InterfaceSummary extends Component<
               <button
                 className={`nav-link ${
                   requestParamsType === REQUEST_PARAMS_TYPE.HEADERS ? 'active' : ''
-                  }`}
+                }`}
                 role="tab"
                 data-toggle="tab"
               >
@@ -408,7 +368,7 @@ class InterfaceSummary extends Component<
               <button
                 className={`nav-link ${
                   requestParamsType === REQUEST_PARAMS_TYPE.QUERY_PARAMS ? 'active' : ''
-                  }`}
+                }`}
                 role="tab"
                 data-toggle="tab"
               >
@@ -422,7 +382,7 @@ class InterfaceSummary extends Component<
               <button
                 className={`nav-link ${
                   requestParamsType === REQUEST_PARAMS_TYPE.BODY_PARAMS ? 'active' : ''
-                  }`}
+                }`}
                 role="tab"
                 data-toggle="tab"
               >
